@@ -8,7 +8,7 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.widget.Toast;
+import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -28,6 +28,7 @@ public class GeoFencingService extends Service {
     private List<Geofence> mGeofenceList;
     private PendingIntent mGeofencePendingIntent;
 
+    private static final String TAG = "GeoFencingService";
     public GeoFencingService() {
     }
 
@@ -37,9 +38,8 @@ public class GeoFencingService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-
-    @Subscribe
     public void addGeoFence(GeoFenceEvent geoFenceEvent) {
+        Log.d(TAG,"geofence add"+geoFenceEvent.toString());
         initialize();
         mGeofenceList.clear();
         mGeofenceList.add(new Geofence.Builder()
@@ -48,7 +48,7 @@ public class GeoFencingService extends Service {
                         geoFenceEvent.getLatitude(), geoFenceEvent.getLongitude(),
                         geoFenceEvent.getMeters()
                 )
-                .setExpirationDuration(geoFenceEvent.getExpiration_millis())
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
                         Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build());
@@ -72,7 +72,8 @@ public class GeoFencingService extends Service {
                     public void onSuccess(Void aVoid) {
                         // Geofences added
                         // ...
-                        Toast.makeText(getApplicationContext(),"Fence added",Toast.LENGTH_SHORT).show();
+                        Log.d(TAG,"geofence added success");
+                        //Toast.makeText(getApplicationContext(),"GeoFence added",Toast.LENGTH_SHORT).show();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -80,7 +81,8 @@ public class GeoFencingService extends Service {
                     public void onFailure(@NonNull Exception e) {
                         // Failed to add geofences
                         // ...
-                        Toast.makeText(getApplicationContext(),"Fence add fail",Toast.LENGTH_SHORT).show();
+                        Log.d(TAG,"geofence added failed");
+                        //Toast.makeText(getApplicationContext(),"GeoFence add fail",Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -112,6 +114,11 @@ public class GeoFencingService extends Service {
         }
         mGeofencingClient = LocationServices.getGeofencingClient(this);
         mGeofenceList=new ArrayList<>();
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
         EventBus.getDefault().register(this);
     }
 
@@ -119,5 +126,42 @@ public class GeoFencingService extends Service {
     public void onDestroy() {
         EventBus.getDefault().unregister(this);
         super.onDestroy();
+    }
+
+
+    public void removeGeoFence(GeoFenceEvent event)
+    {
+        Log.d(TAG,"geofence remove");
+        mGeofencingClient.removeGeofences(getGeofencePendingIntent())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.d(TAG,"geofence removed success");
+                        //Toast.makeText(getApplicationContext(),"GeoFence removed",Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d(TAG,"geofence removed failed");
+                        //Toast.makeText(getApplicationContext(),"GeoFence remove failed",Toast.LENGTH_SHORT).show();
+                        // Failed to remove geofences
+                        // ...
+                    }
+                });
+
+    }
+
+    @Subscribe
+    public void onGeoFenceEvent(GeoFenceEvent event)
+    {
+        Log.d(TAG,"got geofenceEvent");
+        if (event.isActive())
+        {
+            addGeoFence(event);
+        }else
+        {
+            removeGeoFence(event);
+        }
     }
 }

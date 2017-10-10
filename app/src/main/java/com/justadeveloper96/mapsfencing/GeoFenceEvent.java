@@ -9,14 +9,33 @@ public class GeoFenceEvent {
     private double latitude;
     private double longitude;
     private float meters;
-    long expiration_millis;
+    private long expiration_millis;
+    private boolean active;
 
-    public GeoFenceEvent(String key, double latitude, double longitude, float meters, long expiration_millis) {
+
+    public GeoFenceEvent(String key, double latitude, double longitude, float meters, long expiration_millis, boolean active) {
         this.key = key;
         this.latitude = latitude;
         this.longitude = longitude;
         this.meters = meters;
         this.expiration_millis = expiration_millis;
+        this.active = active;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    @Override
+    public String toString() {
+        return "GeoFenceEvent{" +
+                "key='" + key + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                ", meters=" + meters +
+                ", expiration_millis=" + expiration_millis +
+                ", active=" + active +
+                '}';
     }
 
     public String getKey() {
